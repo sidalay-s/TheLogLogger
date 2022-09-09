@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "sqlite/sqlite3.h"
+#include "sqlite3.h"
 
 int CreateDB(const std::string& Directory);
 int CreateTable(const std::string& Directory);
@@ -14,12 +14,12 @@ int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
 int main()
 {
     std::string Directory = "C:\\Dev\\Study\\TheLogLogger\\Journal.db";
-    sqlite3* Database{nullptr};
+    // sqlite3* Database{nullptr};
 
     CreateDB(Directory);
     CreateTable(Directory);
-    InsertData(Directory);
-    // UpdateData(Directory);
+    // InsertData(Directory);
+    UpdateData(Directory);
     // DeleteData(Directory, "1");
     SelectData(Directory);
     // DeleteTable(Directory, "Entry");
@@ -28,10 +28,8 @@ int main()
 int CreateDB(const std::string& Directory)
 {
     sqlite3* Database{nullptr};
-    int Exit{0};
 
-    Exit = sqlite3_open(Directory.c_str(), &Database);
-
+    sqlite3_open(Directory.c_str(), &Database);
     sqlite3_close(Database);
 
     return 0;
@@ -131,6 +129,7 @@ int InsertData(const std::string& Directory)
         std::cout << "Records created successfully!\n" << std::endl;
     }
 
+    sqlite3_close(Database);
     return 0;
 }
 
@@ -153,6 +152,7 @@ int UpdateData(const std::string& Directory)
         std::cout << "Records updated successfully!\n" << std::endl;
     }
 
+    sqlite3_close(Database);
     return 0;
 }
 
@@ -178,19 +178,32 @@ int DeleteData(const std::string& Directory, const std::string DataID)
         std::cout << "Data deleted successfully\n" << std::endl;
     }
 
+    sqlite3_close(Database);
     return 0;
 }
 
 int SelectData(const std::string& Directory)
 {
     sqlite3* Database{nullptr};
+    char* MessageError{nullptr};
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
 
     std::string SQL{"SELECT * FROM ENTRY;"};
     // std::string SQL{"SELECT Date, Ingredients FROM ENTRY;"};
 
-    sqlite3_exec(Database, SQL.c_str(), Callback, NULL, NULL);
+    Exit = sqlite3_exec(Database, SQL.c_str(), Callback, NULL, NULL);
 
+    if (Exit != SQLITE_OK)
+    {
+        std::cerr << "Error on Select\n" << std::endl;
+        sqlite3_free(MessageError);
+    }
+    else
+    {
+        std::cout << "Data selected successfully\n" << std::endl;
+    }
+
+    sqlite3_close(Database);
     return 0;
 }
 
