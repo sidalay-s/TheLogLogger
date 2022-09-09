@@ -6,6 +6,7 @@ int CreateDB(const std::string& Directory);
 int CreateTable(const std::string& Directory);
 int DeleteTable(const std::string& Directory, const std::string TableName);
 int InsertData(const std::string& Directory);
+int UpdateData(const std::string& Directory);
 int DeleteData(const std::string& Directory, const std::string DataID);
 int SelectData(const std::string& Directory);
 int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
@@ -18,6 +19,7 @@ int main()
     CreateDB(Directory);
     CreateTable(Directory);
     InsertData(Directory);
+    // UpdateData(Directory);
     // DeleteData(Directory, "1");
     SelectData(Directory);
     // DeleteTable(Directory, "Entry");
@@ -105,7 +107,7 @@ int InsertData(const std::string& Directory)
         "date(\"now\"), " 
         "1, "
         "\"Oatmeal\", "
-        "\"- Rolled Oats\n"
+        "\"\n- Rolled Oats\n"
         "- Apples\n"
         "- Flax Seed\n"
         "- Cinnamon\n"
@@ -127,6 +129,28 @@ int InsertData(const std::string& Directory)
     else
     {
         std::cout << "Records created successfully!\n" << std::endl;
+    }
+
+    return 0;
+}
+
+int UpdateData(const std::string& Directory)
+{
+    sqlite3* Database{nullptr};
+    char* MessageError{nullptr};
+    int Exit{sqlite3_open(Directory.c_str(), &Database)};
+
+    std::string SQL {"UPDATE ENTRY SET ID = 2 WHERE ID = 5"};
+
+    Exit = sqlite3_exec(Database, SQL.c_str(), NULL, 0, &MessageError);
+    if (Exit != SQLITE_OK)
+    {
+        std::cerr << "Error on Update\n" << std::endl;
+        sqlite3_free(MessageError);
+    }
+    else
+    {
+        std::cout << "Records updated successfully!\n" << std::endl;
     }
 
     return 0;
@@ -163,6 +187,7 @@ int SelectData(const std::string& Directory)
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
 
     std::string SQL{"SELECT * FROM ENTRY;"};
+    // std::string SQL{"SELECT Date, Ingredients FROM ENTRY;"};
 
     sqlite3_exec(Database, SQL.c_str(), Callback, NULL, NULL);
 
