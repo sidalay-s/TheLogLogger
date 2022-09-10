@@ -6,6 +6,8 @@
 #include <vector>
 #include "sqlite3.h"
 
+enum class Command {Create, Read, Update, Delete};
+
 class SQL
 {
 public:
@@ -21,7 +23,9 @@ private:
     sqlite3* Database{nullptr};
     char* MessageError{nullptr};
 
-    int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
+    void Execute(std::string SqlCode, Command Cmd);
+    void CheckExecute(int Exe, Command Cmd);
+    friend int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
 public:
     SQL();
 };
