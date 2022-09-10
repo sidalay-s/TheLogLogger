@@ -1,8 +1,6 @@
 #ifndef SQL_HPP
 #define SQL_HPP
 
-#include <iostream>
-#include <iomanip>
 #include <string>
 #include <vector>
 #include "sqlite3.h"

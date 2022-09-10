@@ -7,6 +7,6 @@ int main()
 
     while (!Database.GetExit())
     {
-        
+        Database.Menu();
     }
 }

@@ -1,4 +1,7 @@
 #include "sql.hpp"
+#include <iomanip>
+#include <iostream>
+#include <limits>
 
 int Callback(void* NotUsed, int Argc, char** Argv, char** azColName)
 {
@@ -11,9 +14,55 @@ int Callback(void* NotUsed, int Argc, char** Argv, char** azColName)
     return 0;
 }
 
+void CinError(std::string ErrorMessage)
+{
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout << "\n" << ErrorMessage;
+    std::cin.get();
+}
+
 void SQL::Menu()
 {
+    int Input{};
 
+    std::cout << "\n" <<
+    "1. Create\n" <<
+    "2. Read\n" <<
+    "3. Update\n" <<
+    "4. Delete\n" <<
+    "5. Exit\n" <<
+    "Choose a number: ";
+    
+    std::cin >> Input;
+    if (std::cin.fail())
+    {
+        CinError("Invalid entry. Press enter to continue.");
+    }
+    else
+    {
+        switch(Input)
+        {
+            case 1:
+                Create();
+                break;
+            case 2:
+                Read();
+                break;
+            case 3:
+                Update();
+                break;
+            case 4:
+                Delete();
+                break;
+            case 5:
+                Exit = true;
+                break;
+            default:
+                CinError("Invalid entry. Press enter to continue.");
+                break;
+        }
+    }
 }
 
 void SQL::Create()
@@ -36,11 +85,13 @@ void SQL::Delete()
 
 }
 
+// -------------------------------------------------------------------
+
 void SQL::CreateDB()
 {
     sqlite3_open(Directory.c_str(), &Database);
     sqlite3_close(Database);
-    std::cout << "The Log Logger\n\n";
+    std::cout << "\n[--- THE LOG LOGGER ---]\n";
 }
 
 void SQL::CreateTable()
