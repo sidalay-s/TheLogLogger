@@ -1,43 +1,38 @@
-#include <iostream>
-#include <string>
-#include "sqlite3.h"
+#include "sql.hpp"
 
-int CreateDB(const std::string& Directory);
-int CreateTable(const std::string& Directory);
-int DeleteTable(const std::string& Directory, const std::string TableName);
-int InsertData(const std::string& Directory);
-int UpdateData(const std::string& Directory);
-int DeleteData(const std::string& Directory, const std::string DataID);
-int SelectData(const std::string& Directory);
+int CreateDB(const std::string& Directory, sqlite3* Database);
+int CreateTable(const std::string& Directory, sqlite3* Database);
+int DeleteTable(const std::string& Directory, sqlite3* Database, const std::string TableName);
+int InsertData(const std::string& Directory, sqlite3* Database);
+int UpdateData(const std::string& Directory, sqlite3* Database);
+int DeleteData(const std::string& Directory, sqlite3* Database, const std::string DataID);
+int SelectData(const std::string& Directory, sqlite3* Database);
 int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
 
 int main()
 {
-    std::string Directory = "C:\\Dev\\Study\\TheLogLogger\\Journal.db";
-    // sqlite3* Database{nullptr};
-
-    CreateDB(Directory);
-    CreateTable(Directory);
-    // InsertData(Directory);
-    UpdateData(Directory);
-    // DeleteData(Directory, "1");
-    SelectData(Directory);
-    // DeleteTable(Directory, "Entry");
-}
-
-int CreateDB(const std::string& Directory)
-{
+    std::string Directory = "Journal.db";
     sqlite3* Database{nullptr};
 
+    CreateDB(Directory, Database);
+    CreateTable(Directory, Database);
+    InsertData(Directory, Database);
+    // UpdateData(Directory, Database);
+    DeleteData(Directory, Database, "1");
+    SelectData(Directory, Database);
+    // DeleteTable(Directory, Database, "Entry");
+}
+
+int CreateDB(const std::string& Directory, sqlite3* Database)
+{
     sqlite3_open(Directory.c_str(), &Database);
     sqlite3_close(Database);
 
     return 0;
 }
 
-int CreateTable(const std::string& Directory)
+int CreateTable(const std::string& Directory, sqlite3* Database)
 {
-    sqlite3* Database{nullptr};
     char* MessageError{nullptr};
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
 
@@ -68,9 +63,8 @@ int CreateTable(const std::string& Directory)
     return 0;
 }
 
-int DeleteTable(const std::string& Directory, const std::string TableName)
+int DeleteTable(const std::string& Directory, sqlite3* Database, const std::string TableName)
 {
-    sqlite3* Database{nullptr};
     char* MessageError{nullptr};
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
 
@@ -93,9 +87,8 @@ int DeleteTable(const std::string& Directory, const std::string TableName)
     return 0;
 }
 
-int InsertData(const std::string& Directory)
+int InsertData(const std::string& Directory, sqlite3* Database)
 {
-    sqlite3* Database{nullptr};
     char* MessageError{nullptr};
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
 
@@ -133,9 +126,8 @@ int InsertData(const std::string& Directory)
     return 0;
 }
 
-int UpdateData(const std::string& Directory)
+int UpdateData(const std::string& Directory, sqlite3* Database)
 {
-    sqlite3* Database{nullptr};
     char* MessageError{nullptr};
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
 
@@ -156,9 +148,8 @@ int UpdateData(const std::string& Directory)
     return 0;
 }
 
-int DeleteData(const std::string& Directory, const std::string DataID)
+int DeleteData(const std::string& Directory, sqlite3* Database, const std::string DataID)
 {
-    sqlite3* Database{nullptr};
     char* MessageError{nullptr};
 
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
@@ -182,9 +173,8 @@ int DeleteData(const std::string& Directory, const std::string DataID)
     return 0;
 }
 
-int SelectData(const std::string& Directory)
+int SelectData(const std::string& Directory, sqlite3* Database)
 {
-    sqlite3* Database{nullptr};
     char* MessageError{nullptr};
     int Exit{sqlite3_open(Directory.c_str(), &Database)};
 
