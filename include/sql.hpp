@@ -18,20 +18,26 @@ public:
 
     void CreateDB();
     void CreateTable();
-    void DeleteTable(const std::string TableName);
+    bool CreateColumns(std::vector<std::string>& Columns);
     void InsertData();
     void UpdateData();
-    void DeleteData(const std::string DataID);
     void SelectData();
+    void DeleteTable(const std::string TableName);
+    void DeleteData(const std::string DataID);
     bool GetExit() {return Exit;}
 private:
     const std::string Directory{"Journal.db"};
     sqlite3* Database{nullptr};
     char* MessageError{nullptr};
     bool Exit{false};
+    std::vector<std::string> Tables{};
+    std::vector<std::vector<std::string>> Entries{};
 
     void Execute(std::string SqlCode, Command Cmd);
     void CheckExecute(int Exe, Command Cmd);
+    bool TableExists(std::string& Name);
+    void GrabTables();
+    void GrabEntries();
     friend int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
 public:
     SQL() = default;

@@ -26,7 +26,8 @@ void SQL::Menu()
 {
     int Input{};
 
-    std::cout << "\033[2J\033[1;1H" <<
+    system("clear");
+    std::cout <<
     "\nWhat would you like to do?\n"
     "-----------------\n"
     "|  [1] Create   |\n"
@@ -72,7 +73,8 @@ void SQL::Create()
 {
     int Input{};
 
-    std::cout << "\033[2J\033[1;1H" <<
+    system("clear");
+    std::cout <<
     "\nWhat would you like to create?\n"
     "---------------------------\n"
     "| [1] Create new Table    |\n"
@@ -112,7 +114,8 @@ void SQL::Read()
 {
     int Input{};
 
-    std::cout << "\033[2J\033[1;1H" <<
+    system("clear");
+    std::cout  <<
     "\nWhich table would you like to select?\n"
     "---------------------------\n"
     "| [1] Create new Table    |\n"
@@ -163,8 +166,8 @@ void SQL::Delete()
 void SQL::CreateDB()
 {
     sqlite3_open(Directory.c_str(), &Database);
-    sqlite3_close(Database);
-    std::cout << "\033[2J\033[1;1H" <<
+    system("clear");
+    std::cout <<
     "\n                   [--- THE LOG LOGGER ---]\n\n"    
     "----------------------------------------------------------------\n"
     "| Welcome to The Log Logger. This is a SQLite database manager |\n"
@@ -174,17 +177,13 @@ void SQL::CreateDB()
     "| a .db file which is created the first time you run this      |\n"
     "| program. The file will be placed in the directory that the   |\n"
     "| executable is ran from, and will be named \"Journal.db\".      |\n"
+    "| Two Tables have been created by default. (Meals & Movements) |\n"
     "----------------------------------------------------------------\n"
     "\n                   Press Enter to continue.";
     std::cin.get();
-}
 
-void SQL::CreateTable()
-{
-    sqlite3_open(Directory.c_str(), &Database);
-
-    std::string TableMeal{
-        "CREATE TABLE IF NOT EXISTS Meal("
+    std::string Meals{
+        "CREATE TABLE IF NOT EXISTS Meals("
         "ID                 INTEGER PRIMARY KEY AUTOINCREMENT, "
         "Date               TEXT    NOT NULL, "
         "Meal               TEXT    NOT NULL, " 
@@ -192,18 +191,285 @@ void SQL::CreateTable()
         "Ingredients        TEXT    NOT NULL, "
         "Description        TEXT    NOT NULL); "
     };
-    Execute(TableMeal, Command::CREATE);
-
-    std::string TableBowelMovement{
-        "CREATE TABLE IF NOT EXISTS Poop("
+    std::string Movements{
+        "CREATE TABLE IF NOT EXISTS Movements("
         "ID                 INTEGER PRIMARY KEY AUTOINCREMENT, "
         "Date               TEXT    NOT NULL, "
-        "BowelMovement      TEXT    NOT NULL, " 
+        "Bowel Movement     TEXT    NOT NULL, "
         "Description        TEXT    NOT NULL); "
     };
-    Execute(TableBowelMovement, Command::CREATE);
-
+    Execute(Meals, Command::CREATE);
+    Execute(Movements, Command::CREATE);
     sqlite3_close(Database);
+}
+
+void SQL::CreateTable()
+{
+    std::string Table{};
+    std::vector<std::string> Columns{};
+    int Input{}; 
+
+    // Create Table
+    bool Accept{false};
+    while (!Accept)
+    {
+        system("clear");
+        std::cout << "\nEnter a Table name: ";
+        std::cin >> Table;
+
+        // Return to previous menu if table name already exists
+        if (TableExists(Table))
+        {
+            CinError("Table already exists. Press enter to continue.");
+            return;
+        }
+        
+        // Check with user for any spelling errors
+        std::cout << "\nIs '" << Table << "' correct?\n"
+        "----------------\n"
+        "| [1] Yes      |\n"
+        "| [2] No       |\n"
+        "| [3] Return   |\n"
+        "----------------\n";
+        std::cout << "Choose a number: ";
+        std::cin >> Input;
+
+        switch (Input)
+        {
+            case 1:
+                Accept = true;
+                break;
+            case 2:
+                break;
+            case 3:
+                return;
+            default:
+                CinError("Invalid entry. Press enter to continue.");
+                break;
+        } 
+    }
+
+    if (!CreateColumns(Columns))
+    {
+        return;
+    }
+    else
+    {
+        Tables.push_back(Table);
+        Entries.push_back(Columns);
+    }
+
+    std::string NewTable{"CREATE TABLE IF NOT EXISTS "};
+    NewTable.append(Table).append("(");
+
+    for (auto Column:Columns)
+    {
+        NewTable.append(Column).append(",");
+    }
+    NewTable.pop_back();
+    NewTable.append(");");
+
+    std::cout << "\n" << NewTable << std::endl;
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.get();
+
+    sqlite3_open(Directory.c_str(), &Database);
+    Execute(NewTable, Command::CREATE);
+    sqlite3_close(Database);
+}
+
+bool SQL::CreateColumns(std::vector<std::string>& Columns)
+{
+    std::string Column{};
+    int Input{};
+    bool Accept{};
+
+    while (!Accept)
+    {
+        system("clear");
+        std::cout << "\n(Type 'Done' if all columns have been entered)\n" <<
+                     "\nEnter a Column name: ";
+        std::cin >> Column;
+
+        if (Column == "Done" || Column == "done") 
+        {
+            break;
+        }
+
+        bool Spellchecked{};
+        while (!Spellchecked)
+        {
+            // Check with user for any spelling errors
+            system("clear");
+            std::cout << "\nIs '" << Column << "' correct?\n"
+            "----------------\n"
+            "| [1] Yes      |\n"
+            "| [2] No       |\n"
+            "| [3] Return   |\n"
+            "----------------\n";
+            std::cout << "Choose a number: ";
+            std::cin >> Input;
+
+            switch (Input)
+            {
+                case 1:
+                {
+                    Column.append(" ");
+                    Spellchecked = true;
+                    break;
+                }
+                case 2:
+                {
+                    std::cout << "\nEnter a Column name: ";
+                    std::cin >> Column;
+                    break;
+                }
+                case 3:
+                    return false;
+                default:
+                    CinError("Invalid entry. Press enter to continue.");
+                    break;
+            }
+        }
+
+        bool DataTypeChosen{};
+        while (!DataTypeChosen)
+        {
+            system("clear");
+            std::cout << "\n" << Column << "data type\n"
+            "---------------\n"
+            "| [1] TEXT    |\n"
+            "| [2] NUMERIC |\n"
+            "| [3] INTEGER |\n"
+            "| [4] REAL    |\n"
+            "| [5] BLOB    |\n"
+            "---------------\n";
+            std::cout << "Choose a number: ";
+            std::cin >> Input;
+
+            switch (Input)
+            {
+                case 1:
+                {
+                    Column.append("TEXT ");
+                    DataTypeChosen = true;
+                    break;
+                }
+                case 2:
+                {
+                    Column.append("NUMERIC ");
+                    DataTypeChosen = true;
+                    break;
+                }
+                case 3:
+                {
+                    Column.append("INTEGER ");
+                    DataTypeChosen = true;
+                    break;
+                }
+                case 4:
+                {
+                    Column.append("REAL ");
+                    DataTypeChosen = true;
+                    break;
+                }
+                case 5:
+                {
+                    Column.append("BLOB ");
+                    DataTypeChosen = true;
+                    break;
+                }
+                default:
+                    CinError("Invalid entry. Press enter to continue.");
+                    break;
+            }
+        }
+
+        bool OptionsChosen{};
+        while (!OptionsChosen)
+        {
+            system("clear");
+            std::cout << "\nAdditional options\n"
+            "----------------------------------\n"
+            "| [1] NOT NULL                   |\n"
+            "| [2] PRIMARY KEY                |\n"
+            "| [3] UNIQUE                     |\n"
+            "| [4] CHECK                      |\n"
+            "| [5] PRIMARY KEY AUTOINCREMENT  |\n"
+            "| [6] DEFAULT                    |\n"
+            "| [7] COLLATE                    |\n"
+            "| [8] GENERATED ALWAYS AS        |\n"
+            "| [9] NONE                       |\n"
+            "----------------------------------\n";
+            std::cout << "Choose a number: ";
+            std::cin >> Input;
+
+            switch (Input)
+            {
+                case 1:
+                {
+                    Column.append("NOT NULL");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 2:
+                {
+                    Column.append("PRIMARY");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 3:
+                {
+                    Column.append("UNIQUE");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 4:
+                {
+                    Column.append("CHECK");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 5:
+                {
+                    Column.append("PRIMARY KEY AUTOINCREMENT");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 6:
+                {
+                    Column.append("DEFAULT");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 7:
+                {
+                    Column.append("COLLATE");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 8:
+                {
+                    Column.append("GENERATED ALWAYS AS");
+                    OptionsChosen = true;
+                    break;
+                }
+                case 9:
+                {
+                    OptionsChosen = true;
+                    break;
+                }
+                default:
+                    CinError("Invalid entry. Press enter to continue.");
+                    break;
+            }
+        }
+
+        Columns.push_back(Column);
+    }
+
+    return true;
 }
 
 void SQL::DeleteTable(const std::string TableName)
@@ -343,9 +609,22 @@ void SQL::CheckExecute(int Exe, Command Cmd)
     }
 }
 
+bool SQL::TableExists(std::string& Name)
+{
+    for (auto& Tbl:Tables)
+    {
+        if (Tbl == Name) 
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 SQL::~SQL()
 {
-    std::cout << "\033[2J\033[1;1H" <<
+    system("clear");
+    std::cout <<
     "\n                   [--- THE LOG LOGGER ---]\n\n"    
     "----------------------------------------------------------------\n"
     "| Thank you for using The Log Logger!                          |\n"
@@ -358,5 +637,5 @@ SQL::~SQL()
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cin.get();
-    std::cout << "\033[2J\033[1;1H";
+    system("clear");
 }
