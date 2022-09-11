@@ -25,6 +25,8 @@ public:
     void DeleteTable(const std::string TableName);
     void DeleteData(const std::string DataID);
     bool GetExit() {return Exit;}
+    std::vector<std::string>& GetTables() {return Tables;}
+    std::vector<std::vector<std::string>>& GetEntries() {return Entries;}
 private:
     const std::string Directory{"Journal.db"};
     sqlite3* Database{nullptr};
@@ -33,12 +35,14 @@ private:
     std::vector<std::string> Tables{};
     std::vector<std::vector<std::string>> Entries{};
 
-    void Execute(std::string SqlCode, Command Cmd);
+    void Execute(std::string SqlCode, Command Cmd, void* Ptr = nullptr);
     void CheckExecute(int Exe, Command Cmd);
     bool TableExists(std::string& Name);
-    void GrabTables();
-    void GrabEntries();
+    void FillTables();
+    void FillEntries(std::string TableName);
     friend int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
+    friend int CallbackTables(void* SqlObject, int Argc, char** Argv, char** azColName);
+    friend int CallbackEntries(void* SqlObject, int Argc, char** Argv, char** azColName);
 public:
     SQL() = default;
     ~SQL();

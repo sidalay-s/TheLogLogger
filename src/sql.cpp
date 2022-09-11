@@ -11,6 +11,43 @@ int Callback(void* NotUsed, int Argc, char** Argv, char** azColName)
     }
 
     std::cout << std::endl;
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.get();
+    return 0;
+}
+
+int CallbackTables(void* SqlObject, int Argc, char** Argv, char** azColName)
+{
+    SQL* SqlObj = static_cast<SQL*>(SqlObject);
+
+    for (int i = 0; i < Argc; ++i)
+    {
+        SqlObj->GetTables().push_back(Argv[i]);
+    }
+
+    return 0;
+}
+
+int CallbackEntries(void* SqlObject, int Argc, char** Argv, char** azColName)
+{
+    SQL* SqlObj = static_cast<SQL*>(SqlObject);
+    std::vector<std::string> Data{};
+    int Index{};
+
+    for (int i = 0; i < Argc; ++i)
+    {
+        std::string Temporary{azColName[i]};
+        Temporary.append(": ").append(Argv[i]);
+        if (i+1 >= Argc)
+        {
+            Temporary.append("\n");    
+        }
+        Data.push_back(Temporary);
+    }
+    SqlObj->GetEntries().push_back(Data);
+    Data.clear();
+
     return 0;
 }
 
@@ -112,43 +149,63 @@ void SQL::Create()
 
 void SQL::Read()
 {
-    int Input{};
+    std::string Input{};
+    std::string SqlCode{"SELECT * FROM "};
 
-    system("clear");
-    std::cout  <<
-    "\nWhich table would you like to select?\n"
-    "---------------------------\n"
-    "| [1] Create new Table    |\n"
-    "| [2] Create new Entry    |\n"
-    "| [3] Return to main menu |\n"
-    "---------------------------\n"
-    "Choose a number: ";
-    
-    std::cin >> Input;
-    if (std::cin.fail())
+    bool Accept{false};
+    while (!Accept)
     {
-        CinError("Invalid entry. Press enter to continue.");
-    }
-    else
-    {
-        switch(Input)
+        system("clear");
+        
+        // Check with user for any spelling errors
+        std::cout << "\nWhich table would you like to view?\n";
+        std::cout << "-----------------------\n";
+        for (auto& Table:Tables)
         {
-            case 1:
-                CreateTable();
-                break;
-            case 2:
-                InsertData();
-                break;
-            case 3:
-                break;
-            default:
+            std::cout << "| " << Table << "\n";
+        }
+        std::cout << "-----------------------\n";
+        std::cout << "Type the name and press enter: ";
+        std::cin >> Input;
+        
+        for (auto& Table:Tables)
+        {
+            if (Input == Table)
             {
-                CinError("Invalid entry. Press enter to continue.");
-                Create();
-                break;
+                SqlCode.append(Table);
+                Accept = true;
             }
         }
     }
+
+    sqlite3_open(Directory.c_str(), &Database);
+    Execute(SqlCode, Command::READ);
+    sqlite3_close(Database);
+
+    // if (std::cin.fail())
+    // {
+    //     CinError("Invalid entry. Press enter to continue.");
+    // }
+    // else
+    // {
+    //     switch(Input)
+    //     {
+    //         case 1:
+    //             CreateTable();
+    //             break;
+    //         case 2:
+    //             InsertData();
+    //             break;
+    //         case 3:
+    //             break;
+    //         default:
+    //         {
+    //             CinError("Invalid entry. Press enter to continue.");
+    //             Create();
+    //             break;
+    //         }
+    //     }
+    // }
 }
 
 void SQL::Update()
@@ -180,6 +237,11 @@ void SQL::CreateDB()
     "| Two Tables have been created by default. (Meals & Movements) |\n"
     "----------------------------------------------------------------\n"
     "\n                   Press Enter to continue.";
+    FillTables();
+    for (auto& Table:Tables)
+    {
+        FillEntries(Table);
+    }
     std::cin.get();
 
     std::string Meals{
@@ -233,7 +295,7 @@ void SQL::CreateTable()
         "----------------\n";
         std::cout << "Choose a number: ";
         std::cin >> Input;
-
+        
         switch (Input)
         {
             case 1:
@@ -268,11 +330,6 @@ void SQL::CreateTable()
     }
     NewTable.pop_back();
     NewTable.append(");");
-
-    std::cout << "\n" << NewTable << std::endl;
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.get();
 
     sqlite3_open(Directory.c_str(), &Database);
     Execute(NewTable, Command::CREATE);
@@ -536,24 +593,58 @@ void SQL::DeleteData(const std::string DataID)
 
 void SQL::SelectData()
 {
+    std::string Input{};
+    std::string SqlCode{"SELECT * FROM "};
+
+    bool Accept{false};
+    while (!Accept)
+    {
+        system("clear");
+        
+        // Check with user for any spelling errors
+        std::cout << "\nWhich table would you like to view?\n";
+        std::cout << "-----------------------\n";
+        for (auto& Table:Tables)
+        {
+            std::cout << "| " << Table << "\n";
+        }
+        std::cout << "-----------------------\n";
+        std::cout << "Type the name and press enter: ";
+        std::cin >> Input;
+        
+        for (auto& Table:Tables)
+        {
+            if (Input == Table)
+            {
+                SqlCode.append(Table);
+            }
+        }
+    }
+
     sqlite3_open(Directory.c_str(), &Database);
-    
-    std::string SqlCode{};
-
     Execute(SqlCode, Command::READ);
-
     sqlite3_close(Database);
 }
 
-void SQL::Execute(std::string SqlCode, Command Cmd)
+void SQL::Execute(std::string SqlCode, Command Cmd, void* Ptr)
 {
     int Exe{};
 
     switch (Cmd)
     {
         case Command::READ:
-            Exe = sqlite3_exec(Database, SqlCode.c_str(), Callback, NULL, NULL);
-            break;
+        {
+            if (Ptr == nullptr)
+            {
+                Exe = sqlite3_exec(Database, SqlCode.c_str(), Callback, NULL, NULL);
+                break;
+            }
+            else
+            {
+                Exe = sqlite3_exec(Database, SqlCode.c_str(), CallbackTables, Ptr, NULL);
+                break;
+            }
+        }
         default:
             Exe = sqlite3_exec(Database, SqlCode.c_str(), NULL, 0, &MessageError);
             break;
@@ -569,44 +660,44 @@ void SQL::CheckExecute(int Exe, Command Cmd)
         switch (Cmd)
         {
             case Command::CREATE:
-                std::cerr << "Error on Create\n" << std::endl;
+                std::cerr << "\nError on Create\n" << std::endl;
                 break;
             case Command::READ:
-                std::cerr << "Error on Select\n" << std::endl;
+                std::cerr << "\nError on Select\n" << std::endl;
                 break;
             case Command::UPDATE:
-                std::cerr << "Error on Update\n" << std::endl;
+                std::cerr << "\nError on Update\n" << std::endl;
                 break;
             case Command::DELETE:
-                std::cerr << "Error on Delete\n" << std::endl;
+                std::cerr << "\nError on Delete\n" << std::endl;
                 break;
             case Command::INSERT:
-                std::cerr << "Error on Insert\n" << std::endl;
+                std::cerr << "\nError on Insert\n" << std::endl;
                 break;
         }
         sqlite3_free(MessageError);
     }
-    else
-    {
-        switch (Cmd)
-        {
-            case Command::CREATE:
-                std::cout << "Table created sucessfully\n" << std::endl;
-                break;
-            case Command::READ:
-                std::cout << "Data Selected sucessfully\n" << std::endl;
-                break;
-            case Command::UPDATE:
-                std::cout << "Data Updated sucessfully\n" << std::endl;
-                break;
-            case Command::DELETE:
-                std::cout << "Data Deleted sucessfully\n" << std::endl;
-                break;
-            case Command::INSERT:
-                std::cout << "Data Inserted succesfully\n" << std::endl;
-                break;
-        }
-    }
+    // else
+    // {
+    //     switch (Cmd)
+    //     {
+    //         case Command::CREATE:
+    //             std::cout << "\nTable created sucessfully\n" << std::endl;
+    //             break;
+    //         case Command::READ:
+    //             std::cout << "\nData read sucessfully\n" << std::endl;
+    //             break;
+    //         case Command::UPDATE:
+    //             std::cout << "\nData Updated sucessfully\n" << std::endl;
+    //             break;
+    //         case Command::DELETE:
+    //             std::cout << "\nData Deleted sucessfully\n" << std::endl;
+    //             break;
+    //         case Command::INSERT:
+    //             std::cout << "\nData Inserted succesfully\n" << std::endl;
+    //             break;
+    //     }
+    // }
 }
 
 bool SQL::TableExists(std::string& Name)
@@ -619,6 +710,25 @@ bool SQL::TableExists(std::string& Name)
         }
     }
     return false;
+}
+
+void SQL::FillTables()
+{
+    int Exe{};
+    std::string SqlCode{"SELECT name FROM sqlite_master WHERE type ='table' AND name NOT LIKE 'sqlite_%';"};
+    Exe = sqlite3_exec(Database, SqlCode.c_str(), CallbackTables, this, NULL);
+    
+    CheckExecute(Exe, Command::READ);
+}
+
+void SQL::FillEntries(std::string TableName)
+{
+    int Exe{};
+    std::string SqlCode{"SELECT * FROM "};
+    SqlCode.append(TableName).append(";");
+    Exe = sqlite3_exec(Database, SqlCode.c_str(), CallbackEntries, this, NULL);
+
+    CheckExecute(Exe, Command::READ);
 }
 
 SQL::~SQL()
