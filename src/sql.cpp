@@ -26,12 +26,15 @@ void SQL::Menu()
 {
     int Input{};
 
-    std::cout << "\n" <<
-    "1. Create\n" <<
-    "2. Read\n" <<
-    "3. Update\n" <<
-    "4. Delete\n" <<
-    "5. Exit\n" <<
+    std::cout << "\033[2J\033[1;1H" <<
+    "\nWhat would you like to do?\n"
+    "-----------------\n"
+    "|  [1] Create   |\n"
+    "|  [2] Read     |\n"
+    "|  [3] Update   |\n"
+    "|  [4] Delete   |\n"
+    "|  [5] Exit     |\n"
+    "-----------------\n"
     "Choose a number: ";
     
     std::cin >> Input;
@@ -67,12 +70,82 @@ void SQL::Menu()
 
 void SQL::Create()
 {
+    int Input{};
 
+    std::cout << "\033[2J\033[1;1H" <<
+    "\nWhat would you like to create?\n"
+    "---------------------------\n"
+    "| [1] Create new Table    |\n"
+    "| [2] Create new Entry    |\n"
+    "| [3] Return to main menu |\n"
+    "---------------------------\n"
+    "Choose a number: ";
+    
+    std::cin >> Input;
+    if (std::cin.fail())
+    {
+        CinError("Invalid entry. Press enter to continue.");
+    }
+    else
+    {
+        switch(Input)
+        {
+            case 1:
+                CreateTable();
+                break;
+            case 2:
+                InsertData();
+                break;
+            case 3:
+                break;
+            default:
+            {
+                CinError("Invalid entry. Press enter to continue.");
+                Create();
+                break;
+            }
+        }
+    }
 }
 
 void SQL::Read()
 {
+    int Input{};
 
+    std::cout << "\033[2J\033[1;1H" <<
+    "\nWhich table would you like to select?\n"
+    "---------------------------\n"
+    "| [1] Create new Table    |\n"
+    "| [2] Create new Entry    |\n"
+    "| [3] Return to main menu |\n"
+    "---------------------------\n"
+    "Choose a number: ";
+    
+    std::cin >> Input;
+    if (std::cin.fail())
+    {
+        CinError("Invalid entry. Press enter to continue.");
+    }
+    else
+    {
+        switch(Input)
+        {
+            case 1:
+                CreateTable();
+                break;
+            case 2:
+                InsertData();
+                break;
+            case 3:
+                break;
+            default:
+            {
+                CinError("Invalid entry. Press enter to continue.");
+                Create();
+                break;
+            }
+        }
+    }
 }
 
 void SQL::Update()
@@ -91,7 +164,19 @@ void SQL::CreateDB()
 {
     sqlite3_open(Directory.c_str(), &Database);
     sqlite3_close(Database);
-    std::cout << "\n[--- THE LOG LOGGER ---]\n";
+    std::cout << "\033[2J\033[1;1H" <<
+    "\n                   [--- THE LOG LOGGER ---]\n\n"    
+    "----------------------------------------------------------------\n"
+    "| Welcome to The Log Logger. This is a SQLite database manager |\n"
+    "| with the purpose of keeping track of dietary journal entries |\n"
+    "| in order to raise awareness and promote healthier eating     |\n"
+    "| habits. You will be able to manage Writing/Reading to/from   |\n"
+    "| a .db file which is created the first time you run this      |\n"
+    "| program. The file will be placed in the directory that the   |\n"
+    "| executable is ran from, and will be named \"Journal.db\".      |\n"
+    "----------------------------------------------------------------\n"
+    "\n                   Press Enter to continue.";
+    std::cin.get();
 }
 
 void SQL::CreateTable()
@@ -256,4 +341,22 @@ void SQL::CheckExecute(int Exe, Command Cmd)
                 break;
         }
     }
+}
+
+SQL::~SQL()
+{
+    std::cout << "\033[2J\033[1;1H" <<
+    "\n                   [--- THE LOG LOGGER ---]\n\n"    
+    "----------------------------------------------------------------\n"
+    "| Thank you for using The Log Logger!                          |\n"
+    "|                                                              |\n"
+    "| - Sid Shingaki                                               |\n"
+    "| - Github.com/sidalay-s                                       |\n"
+    "|                                                              |\n"
+    "----------------------------------------------------------------\n"
+    "\n                   Press Enter to continue.";
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.get();
+    std::cout << "\033[2J\033[1;1H";
 }

@@ -35,6 +35,7 @@ private:
     friend int Callback(void* NotUsed, int Argc, char** Argv, char** azColName);
 public:
     SQL() = default;
+    ~SQL();
 };
 
 #endif // SQL_HPP
