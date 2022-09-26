@@ -3,11 +3,16 @@
 
 ##### Goal
 
-> Add meals (no min/max limit)
+> Add meals
+
     - Dish name
     - Ingredients
-> Add bowel movements (no min/max limit)
-    - 
+    
+> Add bowel movements
+
+    - Quality
+    
 > Access a date log
+
     - Access meal entries
     - Access date/log of bowel movements and access more details of a specific date
